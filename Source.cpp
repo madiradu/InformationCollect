@@ -25,7 +25,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <io.h>
-#include <regex>
 #include <map>
 #include <iostream>
 #include <chrono>
@@ -63,8 +62,6 @@ void task1(std::string msg)
 		std::wstring line;
 		std::map<long, string*> details;
 
-		std::regex regex1("^(\\d)");
-		std::regex regex("^\\d{4,5}\s([.]+)\n");
 
 		if (resfile.is_open()) {
 			//std::cout << "result file opened" << std::endl;
@@ -80,9 +77,9 @@ void task1(std::string msg)
 					std::wstring_convert<convert_type, wchar_t> converter;
 					string ab = converter.to_bytes(token.c_str());
 					procId = atoi(ab.c_str());
-					delimiter = std::to_wstring(procId);
-					b = converter.to_bytes(token.substr(0, (token.find(delimiter) == std::wstring::npos) ? (token.length() - 1) : token.find(delimiter)));
-
+					delimiter = L"     " + std::to_wstring(procId);
+					wstring abc = token.substr(0, (token.find(delimiter) == std::wstring::npos) ? (token.length() - 1) : token.find(delimiter));
+					b = converter.to_bytes(abc.c_str());
 				}
 
 
@@ -209,7 +206,10 @@ void _tmain(int argc, TCHAR *argv[])
 
 		while (true) {
 
-			system((std::string("powershell.exe -command  \"Get-CimInstance -class win32_service | Where-Object{ $_.State -eq 'Running' } | Select-Object ProcessId, Name | Out-String \" >>" + psfilename).c_str()));
+			//system((std::string("powershell.exe -command  \"Get-CimInstance -class win32_service | Where-Object{ $_.State -eq 'Running' } | Select-Object ProcessId, Name | Out-String \" >>" + psfilename).c_str()));
+
+			system((std::string(R"(powershell.exe -command  "(Get-Counter '\Process(*)\% Processor Time').CounterSamples | Select InstanceName, @{Name='CPU %';Expression={[Decimal]::Round(($_.CookedValue / (Get-WMIObject Win32_ComputerSystem).NumberOfLogicalProcessors), 2)}} | Out-String " >>)" + psfilename).c_str()));
+
 
 			//WaitForSingleObject(pi.hProcess, (int)argv[2]);
 		}				
