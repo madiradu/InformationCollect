@@ -1,4 +1,4 @@
-#define _REGEX_MAX_STACK_COUNT 200000
+
 #include <windows.h>
 #include <stdio.h>
 #include <tchar.h>
@@ -31,7 +31,7 @@
 #include <ctime>
 #include <codecvt>
 #include <locale>
-
+#include <ratio>
 
 #include <numeric>
 
@@ -43,6 +43,8 @@ using namespace std;
 
 
 auto start = std::chrono::system_clock::now();
+
+thread_local int J = 0;
 
 string map_to_string(const map<string, string*>  &m) {
 	string output = "[";
@@ -61,13 +63,16 @@ string map_to_string(const map<string, string*>  &m) {
 }
 
 
-void task1(std::string msg)
+void task1(int *p)
 {
 
 	while (true) {
 		auto end = std::chrono::system_clock::now();
 		std::chrono::duration<double> elapsed = end - start;
-		if ((std::chrono::duration_cast<std::chrono::milliseconds>(elapsed)) < std::chrono::milliseconds(5000)) {
+		typedef std::chrono::duration<int, std::milli> milliseconds_types;
+
+		milliseconds_types ms_oneday(*p);
+		if ((std::chrono::duration_cast<std::chrono::milliseconds>(elapsed)) < std::chrono::milliseconds(ms_oneday)) {
 			continue;
 			start = end;
 
@@ -86,7 +91,13 @@ void task1(std::string msg)
 			while (getline(resfile, line)) {
 				string b;
 				double procId;
-				if (((unsigned int)line[17] < 48) || ((unsigned int)line[17] > 57)) continue;
+				if (line.length() > 16) {
+					if (((unsigned int)line[17] < 48) || ((unsigned int)line[17] > 57)) { continue; }
+				}
+				else
+				{
+					continue;
+				}
 
 				std::wstring delimiter = L" ";
 				std::wstring token = line.substr(0, line.find(delimiter));
@@ -148,9 +159,14 @@ BOOL WINAPI consoleHandler(DWORD signal) {
 	return TRUE;
 }
 
+
+
 void _tmain(int argc, TCHAR *argv[])
 {
-	std::thread t1(task1, "Data Parsing Thread");
+
+
+	J = _wtoi(argv[2]);
+	std::thread t1(task1, &J);
 	bool running = TRUE;
 	if (!SetConsoleCtrlHandler(consoleHandler, TRUE)) {
 		printf("\nERROR: Could not set control handler");
@@ -224,7 +240,6 @@ void _tmain(int argc, TCHAR *argv[])
 			//Get-process  -name notepad | Sort PrivateMemorySize -Descending | Select PrivateMemorySize -First 10
 
 
-			//CHANGE NAME notepad, length, generate json, documentation, add two other commands
 
 			//get-process -name notepad |Measure-Object Handles -Sum |% Sum
 			//
