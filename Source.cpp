@@ -69,13 +69,19 @@ void task1(int *p)
 	while (true) {
 		auto end = std::chrono::system_clock::now();
 		std::chrono::duration<double> elapsed = end - start;
+
 		typedef std::chrono::duration<int, std::milli> milliseconds_types;
 
 		milliseconds_types ms_oneday(*p);
 		if ((std::chrono::duration_cast<std::chrono::milliseconds>(elapsed)) < std::chrono::milliseconds(ms_oneday)) {
+
 			continue;
+
+		}
+		else {
 			start = end;
 
+			break;
 		}
 	}
 
