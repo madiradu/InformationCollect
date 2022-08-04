@@ -33,6 +33,7 @@
 #include <locale>
 
 
+#include <numeric>
 
 
 using namespace std;
@@ -42,6 +43,23 @@ using namespace std;
 
 
 auto start = std::chrono::system_clock::now();
+
+string map_to_string(const map<string, string*>  &m) {
+	string output = "[";
+	string convrt = "";
+	string result = "";
+
+	for (auto it = m.cbegin(); it != m.cend(); it++) {
+
+		convrt = *(it->second);
+		output += "{" + (it->first) + ":" + (convrt)+"}, ";
+	}
+
+	result = output.substr(0, output.size() - 2);
+	output += "]";
+	return result;
+}
+
 
 void task1(std::string msg)
 {
@@ -57,73 +75,66 @@ void task1(std::string msg)
 	}
 
 
-	try {
+		//try {
 		std::wifstream resfile("test1.ps1");
 		std::wstring line;
-		std::map<long, string*> details;
+		std::map<string, string*> details;
 
 
 		if (resfile.is_open()) {
 			//std::cout << "result file opened" << std::endl;
 			while (getline(resfile, line)) {
 				string b;
-				unsigned int procId;
-				if (((unsigned int)line[8] < 48) || ((unsigned int)line[8] > 57)) continue;
+				double procId;
+				if (((unsigned int)line[17] < 48) || ((unsigned int)line[17] > 57)) continue;
 
-				std::wstring delimiter = L"     ";
-				std::wstring token = line.substr((line.find(delimiter) == std::wstring::npos) ? (line.length() - 1) : line.find(delimiter) + delimiter.length());
+				std::wstring delimiter = L" ";
+				std::wstring token = line.substr(0, line.find(delimiter));
 				if (token != L"") {
 					using convert_type = std::codecvt_utf8<wchar_t>;
 					std::wstring_convert<convert_type, wchar_t> converter;
 					string ab = converter.to_bytes(token.c_str());
-					procId = atoi(ab.c_str());
-					delimiter = L"     " + std::to_wstring(procId);
-					wstring abc = token.substr(0, (token.find(delimiter) == std::wstring::npos) ? (token.length() - 1) : token.find(delimiter));
+					delimiter = token;
+					wstring abc =
+						line.substr(line.find(delimiter) + delimiter.length(), line.length() - 1);
 					b = converter.to_bytes(abc.c_str());
+					b.erase(0, b.find_first_not_of(" \n\r\t"));
+					b.erase(b.find_last_not_of(" \n\r\t") + 1);
+					procId = atoi(b.c_str());
+					//if ((procId == 0)) { continue; }
+
+					details.insert(std::pair<string, string*>(ab, new string(b)));
+
 				}
 
 
-				if ((procId == 0)) { continue; }
-				//if (details.find(procId) != details.end())
-
-				details.insert(std::pair<long, string*>(procId, new string(b)));
 
 			}
 		}
-		resfile.close();
 
 
-		for (map<long, string* >::const_iterator it = details.begin();
-			it != details.end(); ++it)
-		{
-			//std::cout << it->first << " " << it->second << " " << it->first << "\n";
-		}
-
-		Json::Value processes;
-		int i = 0;
-		for (map<long, string* >::const_iterator it = details.begin();
-			it != details.end(); ++it)
-		{
-			Json::Value process;
-			std::string processId = std::to_string(it->first);
-			process["name"] = Json::Value(it->second);
 
 
-			processes[i] = (process);
-			i++;
-		}
+
+
+		string result = map_to_string(details);
+
+
+		Json::StreamWriterBuilder builder;
+		builder["indentation"] = "";  // assume default for comments is None
+		std::string str = Json::writeString(builder, result);
+
+
+
+
 
 		std::ofstream results;
 		results.open("results.txt", ios::app);
-		results << processes << endl;
+		results << result;// << endl;
 		results.close();
+		//}
+		//catch (...) { ; }
 	}
-	catch (...) { ; }
-
-}
-
-
-
 
 
 
@@ -210,6 +221,13 @@ void _tmain(int argc, TCHAR *argv[])
 
 			system((std::string(R"(powershell.exe -command  "(Get-Counter '\Process(*)\% Processor Time').CounterSamples | Select InstanceName, @{Name='CPU %';Expression={[Decimal]::Round(($_.CookedValue / (Get-WMIObject Win32_ComputerSystem).NumberOfLogicalProcessors), 2)}} | Out-String " >>)" + psfilename).c_str()));
 
+			//Get-process  -name notepad | Sort PrivateMemorySize -Descending | Select PrivateMemorySize -First 10
+
+
+			//CHANGE NAME notepad, length, generate json, documentation, add two other commands
+
+			//get-process -name notepad |Measure-Object Handles -Sum |% Sum
+			//
 
 			//WaitForSingleObject(pi.hProcess, (int)argv[2]);
 		}				
